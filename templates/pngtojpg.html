@@ -1,0 +1,86 @@
+{% extends "base.html" %} 
+{% block title %} PNG to JPG {% endblock %}
+
+{% block content %} 
+<style>
+    body {
+    background-color: #f0f0f0; /* set the background color */
+    }
+
+    form {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%); /* center the form horizontally and vertically */
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    input[type="file"] {
+    margin: 10px 0;
+    }
+
+  </style>
+    <center><h1>PNG to JPG Converter</h1></center>
+    <form enctype="multipart/form-data">
+      <input type="file" name="image">
+      <br>
+      <button type="button" onclick="convertToJPG()" class="btn btn-success">Convert to JPG</button>
+    </form>
+    <br>
+    <div id="error-message"></div>
+    <br>
+    <div id="success-message"></div>
+
+    <script>
+      function convertToJPG() {
+        var fileInput = document.querySelector('input[name="image"]');
+        var file = fileInput.files[0];
+        var errorMessage = document.getElementById("error-message");
+        var successMessage = document.getElementById("success-message");
+
+        // Check if image is selected
+        if (!file) {
+          errorMessage.innerHTML = "Please select an image.";
+          return;
+        }
+
+        // Check if the file is in PNG format
+        if (file.type !== "image/png") {
+          errorMessage.innerHTML = "The selected file is not in PNG format.";
+          return;
+        }
+
+        // Check if file size is less than 5MB
+        if (file.size > 5000000) {
+          errorMessage.innerHTML = "The selected file is too large (max 5MB).";
+          return;
+        }
+
+        // Create a FormData object and add the selected file to it
+        var formData = new FormData();
+        formData.append("image", file);
+
+        // Send a POST request to the Flask API
+        fetch("/api/pngtojpg", {
+          method: "POST",
+          body: formData,
+        })
+          .then(function (response) {
+            if (!response.ok) {
+              throw Error(response.statusText);
+            }
+            return response.text();
+          })
+          .then(function (response) {
+            successMessage.innerHTML = response;
+            fileInput.value = ""; // Clear input file after conversion
+          })
+          .catch(function (error) {
+            errorMessage.innerHTML = "Error: " + error.message;
+          });
+      }
+    </script>
+{% endblock %}

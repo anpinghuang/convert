@@ -1,0 +1,75 @@
+{% extends "base.html" %} 
+{% block title %} JPG to PNG {% endblock %}
+
+{% block content %} 
+
+<style>
+    body {
+    background-color: #f0f0f0; /* set the background color */
+    }
+
+    form {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%); /* center the form horizontally and vertically */
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    input[type="file"] {
+    margin: 10px 0;
+    }
+
+  </style>
+	<center><h1>PNG to PDF converter</h1></center>
+	<form action="/api/pngtopdf" method="post" enctype="multipart/form-data">
+		<input type="file" id="image" name="image" accept="image/png"><br><br>
+		<input type="submit" value="Convert to PDF" class="btn btn-success">
+	</form>
+	<div id="message"></div>
+	<script>
+		document.querySelector('form').addEventListener('submit', function(e) {
+			e.preventDefault();
+			const image = document.querySelector('#image').files[0];
+			if (!image) {
+				document.querySelector('#message').innerHTML = 'Please select an image';
+				return;
+			}
+			if (image.type !== 'image/png') {
+				document.querySelector('#message').innerHTML = 'Image is not in PNG format';
+				return;
+			}
+			if (image.size > 5000000) {
+				document.querySelector('#message').innerHTML = 'Image is too large (must be less than 5MB)';
+				return;
+			}
+			const formData = new FormData();
+			formData.append('image', image);
+			fetch('/api/pngtopdf', {
+				method: 'POST',
+				body: formData
+			})
+			.then(response => {
+				if (response.ok) {
+					return response.blob();
+				}
+				throw new Error('Network response was not ok.');
+			})
+			.then(blob => {
+				const url = URL.createObjectURL(blob);
+				const link = document.createElement('a');
+				link.href = url;
+				link.download = 'converted.pdf';
+				link.click();
+				URL.revokeObjectURL(url);
+				document.querySelector('#message').innerHTML = 'Conversion successful';
+			})
+			.catch(error => {
+				document.querySelector('#message').innerHTML = 'Conversion failed: ' + error.message;
+			});
+		});
+	</script>
+{% endblock %}

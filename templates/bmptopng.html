@@ -1,0 +1,78 @@
+{% extends "base.html" %} 
+{% block title %} JPG to PNG {% endblock %}
+
+{% block content %} 
+
+<style>
+    body {
+    background-color: #f0f0f0; /* set the background color */
+    }
+
+    form {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%); /* center the form horizontally and vertically */
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    input[type="file"] {
+    margin: 10px 0;
+    }
+
+  </style>
+    <center><h1>BMP to PNG Converter</h1></center>
+	<form enctype="multipart/form-data">
+		<input type="file" id="imageUpload" name="imageUpload" accept=".bmp">
+		<br>
+		<input type="button" value="Convert to PNG" onclick="convertToPng()" class="btn btn-success">
+	</form>
+
+	<div id="message"></div>
+
+	<script>
+		function convertToPng() {
+			var fileInput = document.getElementById('imageUpload');
+			var file = fileInput.files[0];
+
+			if (!file) {
+				document.getElementById('message').innerHTML = 'Please select an image.';
+				return;
+			}
+
+			if (file.type !== 'image/bmp') {
+				document.getElementById('message').innerHTML = 'Image is not in BMP format.';
+				return;
+			}
+
+			if (file.size > 5 * 1024 * 1024) {
+				document.getElementById('message').innerHTML = 'Image is larger than 5MB.';
+				return;
+			}
+
+			var xhr = new XMLHttpRequest();
+			xhr.open('POST', '/api/bmptopng');
+			xhr.setRequestHeader('Content-Type', 'image/bmp');
+			xhr.onreadystatechange = function() {
+				if (xhr.readyState === XMLHttpRequest.DONE) {
+					if (xhr.status === 200) {
+						var downloadLink = document.createElement('a');
+						downloadLink.href = xhr.responseText;
+						downloadLink.download = 'converted.png';
+						document.body.appendChild(downloadLink);
+						downloadLink.click();
+						document.body.removeChild(downloadLink);
+						document.getElementById('message').innerHTML = 'Conversion successful.';
+					} else {
+						document.getElementById('message').innerHTML = 'An error occurred while converting the image.';
+					}
+				}
+			};
+			xhr.send(file);
+			document.getElementById('message').innerHTML = 'Converting image...';
+		}
+	</script>
+{% endblock %}
